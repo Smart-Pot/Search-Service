@@ -4,25 +4,25 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"searchservice/data"
 
-	"github.com/olivere/elastic/v7"
+	elastic "github.com/olivere/elastic/v7"
 )
 
-const URL = "localhost:9200/smart-pot_opt/posts/_search?pretty"
+const url = "localhost:9200/smart-pot_opt/posts/_search?pretty"
 
+// GetSearchResults gets search results from Elasticsearch client.
 func GetSearchResults(ctx context.Context, query string, pageSize, pageNumber int) ([]*data.Post, error) {
 	client, err := elastic.NewClient()
 	if err != nil {
 		return nil, err
 	}
 
-	exist, err := client.IndexExists("smart-pot_opt").Do(ctx)
+	err = checkIndexExist(ctx, client, "smart-pot_opt")
+
 	if err != nil {
 		return nil, err
-	}
-	if !exist {
-		return nil, errors.New("index not exist")
 	}
 
 	termQuery := elastic.NewTermQuery("plant", query)
@@ -56,4 +56,24 @@ func GetSearchResults(ctx context.Context, query string, pageSize, pageNumber in
 
 	return posts, err
 
+}
+
+func checkIndexExist(ctx context.Context, client *elastic.Client, indexName string) error {
+	exist, err := client.IndexExists(indexName).Do(ctx)
+	if err != nil {
+		return err
+	}
+	if !exist {
+		return createIndex(ctx, client, indexName)
+	}
+
+	return nil
+}
+
+func createIndex(ctx context.Context, client *elastic.Client, indexName string) error {
+	_, err := client.CreateIndex(indexName).BodyString(data.PostMapping).Do(ctx)
+	if err != nil {
+		panic(fmt.Sprintf("index not created, err: %s", err))
+	}
+	return nil
 }
