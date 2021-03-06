@@ -1,18 +1,17 @@
 package data
 
-// Post is a structure used for deserializing data in Elasticsearch.
 type Post struct {
 	ID      string   `json:"id"`
-	UserID  string   `json:"userId"`
-	Plant   string   `json:"plant"`
-	Info    string   `json:"info"`
-	EnvData EnvData  `json:"envData"`
-	Images  []string `json:"images"`
+	UserID  string   `json:"userId" validate:"required"`
+	Plant   string   `json:"plant" validate:"required"`
+	Info    string   `json:"info" validate:"required"`
+	EnvData EnvData  `json:"envData" validate:"required"`
+	Images  []string `json:"images" validate:"required"`
 	Like    []string `json:"like"`
+	Deleted bool     `json:"deleted"`
 	Date    string   `json:"date"`
 }
 
-// EnvData is a structure used for serializing data in Elasticsearch.
 type EnvData struct {
 	Humidity    string `json:"humidity" validate:"required"`
 	Temperature string `json:"temperature" validate:"required"`
@@ -54,8 +53,14 @@ const PostMapping = `
 				   }
 				   }
 			   }, 
+			   "like":{
+				   "type":"text"
+			   },
+			   "deleted":{
+				   "type":"boolean"
+			   },
 			   "date": { 
-				   "type":    "text" 
+				   "type": 	"text" 
 			   } 
 		   } 
 	   } 

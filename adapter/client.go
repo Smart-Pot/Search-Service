@@ -10,24 +10,18 @@ import (
 	elastic "github.com/olivere/elastic/v7"
 )
 
-const url = "localhost:9200/smart-pot_opt/posts/_search?pretty"
-
 // GetSearchResults gets search results from Elasticsearch client.
 func GetSearchResults(ctx context.Context, query string, pageSize, pageNumber int) ([]*data.Post, error) {
-	client, err := elastic.NewClient()
-	if err != nil {
-		return nil, err
-	}
-
-	err = checkIndexExist(ctx, client, "smart-pot_opt")
-
+	url := elastic.SetURL("http://elasticsearch:9200")
+	cl, err := elastic.NewClient(url)
 	if err != nil {
 		return nil, err
 	}
 
 	termQuery := elastic.NewTermQuery("plant", query)
-	searchReasult, err := client.Search().
+	searchReasult, err := cl.Search().
 		Index("smart-pot_opt").
+		Type("posts").
 		Query(termQuery).
 		From(pageSize * (pageNumber - 1)).Size(pageSize).
 		Pretty(true).
@@ -38,11 +32,14 @@ func GetSearchResults(ctx context.Context, query string, pageSize, pageNumber in
 	}
 
 	var posts []*data.Post
-
+	fmt.Println(searchReasult.Hits.TotalHits.Value)
 	if searchReasult.Hits.TotalHits.Value > 0 {
+		fmt.Println(len(searchReasult.Hits.Hits))
+		fmt.Println(searchReasult.Hits.Hits)
 		for _, hit := range searchReasult.Hits.Hits {
 			var p *data.Post
 			err := json.Unmarshal(hit.Source, &p)
+
 			if err != nil {
 				return nil, errors.New("deserialize search results failed")
 			}

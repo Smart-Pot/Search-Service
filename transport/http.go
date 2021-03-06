@@ -3,10 +3,10 @@ package transport
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"searchservice/endpoints"
 
+	pkghttp "github.com/Smart-Pot/pkg/common/http"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/transport"
 	httptransport "github.com/go-kit/kit/transport/http"
@@ -30,7 +30,7 @@ func MakeHTTPHandlers(e endpoints.Endpoints, logger log.Logger) http.Handler {
 		options...,
 	))
 
-	return r
+	return pkghttp.EnableCORS(r)
 }
 
 func encodeHTTPResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
@@ -44,8 +44,6 @@ func decodeSearchHTTPRequest(_ context.Context, r *http.Request) (interface{}, e
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}
-
-	fmt.Println(req)
 
 	return req, nil
 
