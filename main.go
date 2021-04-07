@@ -5,11 +5,15 @@ import (
 	"os"
 	"os/signal"
 	"searchservice/cmd"
-	"searchservice/config"
+
+	"github.com/Smart-Pot/pkg"
 )
 
 func main() {
-	config.ReadConfig()
+	if err := pkg.Config.ReadConfig(); err != nil {
+		log.Fatal(err)
+	}
+	log.Println("Configurations are set")
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, os.Kill)
