@@ -5,12 +5,18 @@ import (
 	"encoding/json"
 	"net/http"
 	"searchservice/endpoints"
+	"strconv"
 
 	pkghttp "github.com/Smart-Pot/pkg/common/http"
+	"github.com/Smart-Pot/pkg/common/perrors"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/transport"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
+)
+
+var (
+	ParamMissing = perrors.New("Parametre is missing.", http.StatusBadRequest)
 )
 
 const userIDTag = "x-user-id"
@@ -41,9 +47,34 @@ func encodeHTTPResponse(ctx context.Context, w http.ResponseWriter, response int
 func decodeSearchHTTPRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	var req endpoints.SearchRequest
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	query, ok := r.URL.Query()["query"]
+	if !ok {
+		return nil, ParamMissing
+	}
+
+	pageSize, ok := r.URL.Query()["pageSize"]
+	if !ok {
+		return nil, ParamMissing
+	}
+
+	size, err := strconv.Atoi(pageSize[0])
+
+	if err != nil {
 		return nil, err
 	}
+
+	pageNumber, ok := r.URL.Query()["pageNumber"]
+	if !ok {
+		return nil, ParamMissing
+	}
+	number, err := strconv.Atoi(pageNumber[0])
+
+	if err != nil {
+		return nil, err
+	}
+	req.Query = query[0]
+	req.PageSize = size
+	req.PageNumber = number
 
 	return req, nil
 
